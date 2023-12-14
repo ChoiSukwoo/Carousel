@@ -134,7 +134,8 @@ const InitStyle = css`
   }
 
   html,
-  body {
+  body,
+  #root {
     padding: 0;
     margin: 0;
     width: 100dvw;
