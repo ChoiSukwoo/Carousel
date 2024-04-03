@@ -1,77 +1,58 @@
-import { FC, TransitionEventHandler, useCallback, useEffect, useState } from "react";
+import { FC, PropsWithChildren, TransitionEventHandler, useCallback, useEffect, useRef, useState } from "react";
 
-import { ItemPageSlider, ItemPage } from "./styles";
+import { ItemPageCover, ItemPageSlider, ItemPageSliderContainer, ItemPageSliderShield } from "./styles";
 
 import inRange from "../../util/inRange";
 import registDragEvent from "../../util/registDragEvent";
+import React from "react";
 
-//드래그 민감도(작을수록 예민함)
+//최소 해당 수치 이상 움질일시 슬라이드됨
 const DragSensitive = 100;
+const DragEventSensitive = 10;
 
 interface Props {
-  itemList: JSX.Element[];
-  itemPerPage: number;
-  pageWidth: number;
-  itemWidth: number;
+  onPageChange?: (currentPage: number) => void;
 }
 
-const Carousel: FC<Props> = ({ itemList, itemPerPage, pageWidth, itemWidth }) => {
+const Carousel: FC<PropsWithChildren<Props>> = ({ onPageChange, children }) => {
+  const carouselRef = useRef<HTMLDivElement>(null);
   //현재 페이지
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const lastPage = Math.floor((itemList.length - 1) / itemPerPage) + 1;
-  //현재 Index
   const [currentIndex, setCurrentIndex] = useState<number>(1);
-  const lastIndex = Math.floor((itemList.length - 1) / itemPerPage) + 2;
-
-  const itemGap = (pageWidth - itemWidth * itemPerPage) / Math.max(itemPerPage - 1, 1);
   //애니메이션 실행중 여부
-
-  const [studyPage, setStudyPage] = useState<JSX.Element[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [transX, setTransX] = useState(0);
   const [animate, setAnimate] = useState<boolean>(false);
-
-  //페이지 단위로 분활
-  const createPages = useCallback(
-    (maxPage: number) => {
-      return Array.from({ length: maxPage }, (_, pageIndex) => {
-        return (
-          <ItemPage key={`page_${pageIndex}`} pageWidth={pageWidth}>
-            {itemList.slice(pageIndex * itemPerPage, (pageIndex + 1) * itemPerPage).map((data) => data)}
-          </ItemPage>
-        );
-      });
-    },
-    [itemList, itemPerPage, pageWidth]
-  );
-
-  //순환 리스트를 위해 조절
-  const adjustPages = useCallback((pages: JSX.Element[]) => {
-    if (pages.length > 1) {
-      return [pages[pages.length - 1], ...pages, pages[0]].map((page, index) => ({
-        ...page,
-        key: "page_" + index,
-      }));
-    }
-    return pages;
-  }, []);
+  //children 분리
+  const childArray = React.Children.toArray(children);
+  const rerrangedChildren = [
+    childArray[childArray.length - 1], // 마지막 요소를 처음으로
+    ...childArray, // 원본 배열
+    childArray[0], // 첫 번째 요소를 마지막으로
+  ];
+  const lastIndex = rerrangedChildren.length - 1;
+  const pageCnt = rerrangedChildren.length;
 
   //드래그중 작동될 이벤트
-  const dragChangeEvent = (deltaX: number, deltaY: number) => {
-    setTransX(inRange(deltaX, -pageWidth, pageWidth));
-    setIsDragging(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const dragChangeEvent = (deltaX: number, _deltaY: number) => {
+    if (!carouselRef.current) return;
+    const width = carouselRef.current.offsetWidth / pageCnt;
+    setTransX(inRange(deltaX, -width, width));
+    if (Math.abs(deltaX) > DragEventSensitive) {
+      setIsDragging(true);
+    }
   };
 
   //드래그 종료시 실행될 이벤트
-  const dragEndEvent = (deltaX: number, deltaY: number) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const dragEndEvent = (deltaX: number, _deltaY: number) => {
     if (deltaX < -DragSensitive) setCurrentIndex(inRange(currentIndex + 1, 0, lastIndex));
     if (deltaX > DragSensitive) setCurrentIndex(inRange(currentIndex - 1, 0, lastIndex));
 
     setAnimate(true);
     setTransX(0);
-    setTimeout(() => {
-      setIsDragging(false);
-    }, 1);
+    setTimeout(() => setIsDragging(false), 1);
   };
 
   const transitionEndEvent = useCallback<TransitionEventHandler>(() => {
@@ -95,26 +76,31 @@ const Carousel: FC<Props> = ({ itemList, itemPerPage, pageWidth, itemWidth }) =>
   }, [currentIndex, lastIndex, setCurrentPage]);
 
   useEffect(() => {
-    const tempPageList = createPages(lastPage);
-    const adjustedPageList = adjustPages(tempPageList);
-    setStudyPage(adjustedPageList);
-  }, [adjustPages, createPages, lastPage]);
+    if (onPageChange) {
+      onPageChange(currentPage);
+    }
+  }, [currentPage, onPageChange]);
 
   return (
-    <ItemPageSlider
-      currentIndex={currentIndex}
-      itemGap={itemGap}
-      pageWidth={pageWidth}
-      transX={transX}
-      animate={animate}
-      {...registDragEvent({
-        onDragChange: dragChangeEvent,
-        onDragEnd: dragEndEvent,
-      })}
-      onTransitionEnd={transitionEndEvent}
-    >
-      {studyPage}
-    </ItemPageSlider>
+    <ItemPageSliderContainer>
+      <ItemPageSlider
+        ref={carouselRef}
+        pageCnt={pageCnt}
+        currentIndex={currentIndex}
+        transX={transX}
+        animate={animate}
+        onTransitionEnd={transitionEndEvent}
+        {...registDragEvent({
+          onDragChange: dragChangeEvent,
+          onDragEnd: dragEndEvent,
+        })}
+      >
+        {rerrangedChildren.map((page, index) => (
+          <ItemPageCover key={index}>{page}</ItemPageCover>
+        ))}
+      </ItemPageSlider>
+      {isDragging && <ItemPageSliderShield />}
+    </ItemPageSliderContainer>
   );
 };
 

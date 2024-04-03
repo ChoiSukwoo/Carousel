@@ -1,36 +1,44 @@
 import styled from "@emotion/styled";
+import { Util } from "../../styles";
 
 interface CarouselProps {
+  pageCnt: number;
   currentIndex: number;
-  itemGap: number;
-  pageWidth: number;
   transX: number;
   animate: boolean;
 }
 
-type CarouselPageProps = Pick<CarouselProps, "pageWidth">;
+export const ItemPageSliderContainer = styled.div({
+  position: "relative",
+  width: "100%",
+  height: "100%",
+  overflow: "hidden",
+});
 
 export const ItemPageSlider = styled.div<CarouselProps>(
+  Util.DragPrevent,
   {
-    width: "100%",
     height: "fit-content",
     display: "flex",
+    backgroundColor: "blue",
   },
-  ({ currentIndex, itemGap, pageWidth, transX, animate }) => ({
-    columnGap: itemGap,
-    transform: `translateX(${-currentIndex * (pageWidth + itemGap) + transX}px)`,
+  ({ pageCnt, currentIndex, transX, animate }) => ({
+    width: `${100 * pageCnt}%`,
+    transform: `translateX(calc(${-(currentIndex / pageCnt) * 100}% + ${transX}px))`,
     transition: `transform ${animate ? 300 : 0}ms ease-in-out 0s`,
   })
 );
 
-export const ItemPage = styled.div<CarouselPageProps>(
-  {
-    boxSizing: "border-box",
-    flexShrink: 0,
-    display: "flex",
-    justifyContent: "space-between",
-  },
-  ({ pageWidth }) => ({
-    width: `${pageWidth}px`,
-  })
-);
+export const ItemPageCover = styled.div({
+  width: "100%",
+  height: "100%",
+});
+
+export const ItemPageSliderShield = styled.div({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  backgroundColor: "transparent",
+});

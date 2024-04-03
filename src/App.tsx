@@ -1,22 +1,24 @@
 import GlobalStyleProvider from "./Provider/GlobalStyleProvider";
 import Carousel from "./component/Carousel";
-import Item from "./component/Item";
+import Item from "./component/Page";
 
 function App() {
-  const itemList = Array.from({ length: 13 }, (_, pageIndex) => {
-    return <Item key={`item_${pageIndex}`} content={pageIndex + 1} />;
-  });
-
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <GlobalStyleProvider />
-      <div style={{ width: "940px", height: "200px", overflow: "hidden" }}>
-        <Carousel itemList={itemList} itemPerPage={3} pageWidth={940} itemWidth={300} />
+      <div style={{ width: "300px", height: "200px" }}>
+        <Carousel>
+          <div
+            style={{ width: "100%", height: "100px", display: "flex", justifyContent: "center", alignItems: "center" }}
+          >
+            <div style={{ width: "50px", height: "50px", backgroundColor: "yellow" }}>1페이지</div>
+          </div>
+          <Item content={2} />
+          <Item content={3} />
+          <Item content={4} />
+          <Item content={5} />
+        </Carousel>
       </div>
-
-      {/* <div style={{ width: "940px", height: "200px", overflow: "hidden" }}>
-        <Carousel itemList={itemList} itemPerPage={1} pageWidth={310} itemWidth={300} />
-      </div> */}
     </div>
   );
 }
