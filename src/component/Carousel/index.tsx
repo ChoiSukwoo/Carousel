@@ -1,10 +1,16 @@
-import { FC, PropsWithChildren, TransitionEventHandler, useCallback, useEffect, useRef, useState } from "react";
-
-import { ItemPageCover, ItemPageSlider, ItemPageSliderContainer, ItemPageSliderShield } from "./styles";
-
+import {
+  Children,
+  FC,
+  PropsWithChildren,
+  TransitionEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import inRange from "../../util/inRange";
 import registDragEvent from "../../util/registDragEvent";
-import React from "react";
+import { ItemPageCover, ItemPageSlider, ItemPageSliderContainer } from "./styles";
 
 //최소 해당 수치 이상 움질일시 슬라이드됨
 const DragSensitive = 100;
@@ -12,9 +18,10 @@ const DragEventSensitive = 10;
 
 interface Props {
   onPageChange?: (currentPage: number) => void;
+  onDragChange?: (drag: boolean) => void;
 }
 
-const Carousel: FC<PropsWithChildren<Props>> = ({ onPageChange, children }) => {
+const Carousel: FC<PropsWithChildren<Props>> = ({ onPageChange, onDragChange, children }) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   //현재 페이지
   const [currentPage, setCurrentPage] = useState<number>(0);
@@ -24,7 +31,7 @@ const Carousel: FC<PropsWithChildren<Props>> = ({ onPageChange, children }) => {
   const [transX, setTransX] = useState(0);
   const [animate, setAnimate] = useState<boolean>(false);
   //children 분리
-  const childArray = React.Children.toArray(children);
+  const childArray = Children.toArray(children);
   const rerrangedChildren = [
     childArray[childArray.length - 1], // 마지막 요소를 처음으로
     ...childArray, // 원본 배열
@@ -75,11 +82,10 @@ const Carousel: FC<PropsWithChildren<Props>> = ({ onPageChange, children }) => {
     }
   }, [currentIndex, lastIndex, setCurrentPage]);
 
-  useEffect(() => {
-    if (onPageChange) {
-      onPageChange(currentPage);
-    }
-  }, [currentPage, onPageChange]);
+  //page 변경 상위로 전달
+  useEffect(() => onPageChange?.(currentPage), [currentPage, onPageChange]);
+  //드래그 정보 상위로 전달
+  useEffect(() => onDragChange?.(isDragging), [currentPage, isDragging, onDragChange, onPageChange]);
 
   return (
     <ItemPageSliderContainer>
@@ -99,7 +105,6 @@ const Carousel: FC<PropsWithChildren<Props>> = ({ onPageChange, children }) => {
           <ItemPageCover key={index}>{page}</ItemPageCover>
         ))}
       </ItemPageSlider>
-      {isDragging && <ItemPageSliderShield />}
     </ItemPageSliderContainer>
   );
 };

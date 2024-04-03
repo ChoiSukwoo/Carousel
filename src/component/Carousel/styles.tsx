@@ -9,7 +9,6 @@ interface CarouselProps {
 }
 
 export const ItemPageSliderContainer = styled.div({
-  position: "relative",
   width: "100%",
   height: "100%",
   overflow: "hidden",
@@ -32,13 +31,4 @@ export const ItemPageSlider = styled.div<CarouselProps>(
 export const ItemPageCover = styled.div({
   width: "100%",
   height: "100%",
-});
-
-export const ItemPageSliderShield = styled.div({
-  position: "absolute",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  backgroundColor: "transparent",
 });
